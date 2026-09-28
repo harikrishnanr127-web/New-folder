@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ bot_name }} - Web Development Study Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --mint: #b8f2d6;
+      --yellow: #ffd84d;
+      --pink: #ff6b9a;
+      --ink: #0d0d0d;
+      --white: #ffffff;
+      --soft: #5a5f66;
+      --display: "Schibsted Grotesk", "Segoe UI", sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: var(--display);
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--mint);
+      display: flex;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .window {
+      width: 100%;
+      max-width: 960px;
+      height: 100%;
+      max-height: 840px;
+      display: flex;
+      flex-direction: column;
+      background: var(--white);
+      border: 3px solid var(--ink);
+      border-radius: 14px;
+      box-shadow: 10px 10px 0 var(--ink);
+      overflow: hidden;
+    }
+
+    .tabs {
+      display: flex;
+      align-items: flex-end;
+      gap: 18px;
+      padding: 10px 16px 0;
+      background: var(--yellow);
+      border-bottom: 3px solid var(--ink);
+    }
+
+    .dots { display: flex; gap: 7px; padding-bottom: 12px; }
+
+    .dots i {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 2px solid var(--ink);
+    }
+
+    .dots i:nth-child(1) { background: var(--pink); }
+    .dots i:nth-child(2) { background: var(--white); }
+    .dots i:nth-child(3) { background: var(--mint); }
+
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 700;
+      font-size: 15px;
+      background: var(--white);
+      border: 3px solid var(--ink);
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+      padding: 7px 18px 7px 12px;
+      margin-bottom: -3px;
+    }
+
+    .favicon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 3px solid var(--ink);
+      border-top-color: var(--pink);
+    }
+
+    .window.busy .favicon { animation: spin 0.7s linear infinite; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 3px solid var(--ink);
+    }
+
+    .reload {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+      width: 38px;
+      height: 38px;
+      background: var(--white);
+      border: 3px solid var(--ink);
+      border-radius: 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .reload:hover, .reload:focus-visible { background: var(--mint); outline: none; }
+    .reload:active { transform: translate(2px, 2px); }
+
+    .address {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--mono);
+      font-size: 14px;
+      background: var(--mint);
+      border: 3px solid var(--ink);
+      border-radius: 999px;
+      padding: 6px 16px;
+    }
+
+    .address span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .address b { font-weight: 700; flex-shrink: 0; }
+
+    .progress { height: 5px; background: var(--white); border-bottom: 3px solid var(--ink); box-sizing: content-box; }
+
+    .progress i { display: block; height: 100%; width: 0; background: var(--pink); }
+
+    .progress.loading i { width: 85%; transition: width 9s cubic-bezier(0.1, 0.7, 0.2, 1); }
+    .progress.done i { width: 100%; transition: width 0.2s; }
+    .progress.done { opacity: 0; transition: opacity 0.35s 0.2s; }
+
+    .bookmarks {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 12px 16px;
+      border-bottom: 3px solid var(--ink);
+    }
+
+    .bookmark {
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      color: var(--ink);
+      background: var(--white);
+      border: 2.5px solid var(--ink);
+      border-radius: 8px;
+      box-shadow: 3px 3px 0 var(--ink);
+      padding: 4px 12px;
+      cursor: pointer;
+    }
+
+    .bookmark:hover, .bookmark:focus-visible { background: var(--yellow); outline: none; }
+    .bookmark:active { transform: translate(3px, 3px); box-shadow: none; }
+
+    .page {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 24px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      scroll-behavior: smooth;
+    }
+
+    .msg { max-width: 86%; }
+    .msg.user { align-self: flex-end; }
+
+    .bubble {
+      position: relative;
+      border: 3px solid var(--ink);
+      border-radius: 10px;
+      box-shadow: 5px 5px 0 var(--ink);
+      padding: 22px 18px 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .bubble::before {
+      content: attr(data-status);
+      position: absolute;
+      top: -13px;
+      left: 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      padding: 4px 8px;
+      background: var(--mint);
+      border: 2.5px solid var(--ink);
+      border-radius: 6px;
+    }
+
+    .msg.user .bubble { background: var(--yellow); font-weight: 500; }
+    .msg.user .bubble::before { left: auto; right: 12px; background: var(--white); }
+    .msg.error .bubble::before { background: var(--pink); }
+
+    .bubble p + p, .bubble p + ul, .bubble ul + p, .bubble p + pre, .bubble ul + pre, .bubble pre + p { margin-top: 9px; }
+    .bubble ul { padding-left: 20px; }
+    .bubble li + li { margin-top: 3px; }
+    .bubble li::marker { font-weight: 800; }
+    .bubble strong { font-weight: 800; }
+
+    .bubble code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--mint);
+      border: 1.5px solid var(--ink);
+      padding: 0 5px;
+      border-radius: 4px;
+    }
+
+    .bubble pre {
+      background: var(--ink);
+      color: var(--mint);
+      border-radius: 8px;
+      padding: 12px 14px;
+      overflow-x: auto;
+    }
+
+    .bubble pre code { background: none; border: none; padding: 0; color: inherit; font-size: 13.5px; line-height: 1.5; }
+
+    .pending { display: flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 14px; }
+
+    .pending i {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 3px solid var(--ink);
+      border-top-color: var(--pink);
+      animation: spin 0.7s linear infinite;
+    }
+
+    .composer {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      padding: 16px 24px 22px;
+      border-top: 3px solid var(--ink);
+    }
+
+    .composer textarea {
+      flex: 1;
+      font-family: var(--display);
+      font-size: 16px;
+      line-height: 1.4;
+      color: var(--ink);
+      background: var(--white);
+      border: 3px solid var(--ink);
+      border-radius: 10px;
+      padding: 10px 14px;
+      resize: none;
+      max-height: 130px;
+    }
+
+    .composer textarea:focus { outline: none; box-shadow: 4px 4px 0 var(--pink); }
+    .composer textarea::placeholder { color: #8a8f96; }
+
+    .send {
+      font-family: var(--display);
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ink);
+      background: var(--pink);
+      border: 3px solid var(--ink);
+      border-radius: 10px;
+      box-shadow: 4px 4px 0 var(--ink);
+      padding: 10px 22px;
+      cursor: pointer;
+    }
+
+    .send:hover:not(:disabled) { background: #ff85ab; }
+    .send:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: none; }
+    .send:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+    .send:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    @media (max-width: 720px) {
+      body { padding: 0; }
+      .window { max-height: none; border: none; border-radius: 0; box-shadow: none; }
+      .dots { display: none; }
+      .tabs { padding-left: 12px; }
+      .toolbar, .bookmarks, .messages, .composer { padding-left: 14px; padding-right: 14px; }
+      .msg { max-width: 94%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .window.busy .favicon, .pending i { animation: none; }
+      .progress.loading i { transition: none; }
+      .messages { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="window" id="window">
+    <div class="tabs">
+      <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="tab"><span class="favicon" aria-hidden="true"></span>{{ bot_name }}</div>
+    </div>
+
+    <div class="toolbar">
+      <button class="reload" id="clearBtn" type="button" aria-label="Reload and clear chat">&#8635;</button>
+      <div class="address"><b>https://</b><span id="address">webmentor.study/</span></div>
+    </div>
+
+    <div class="progress" id="progress" aria-hidden="true"><i></i></div>
+
+    <nav class="bookmarks" aria-label="Suggested topics">
+      <button class="bookmark" data-prompt="Explain the CSS box model with a small example.">Box model</button>
+      <button class="bookmark" data-prompt="When should I use Flexbox and when should I use CSS Grid?">Flexbox vs Grid</button>
+      <button class="bookmark" data-prompt="What happens step by step when I type a URL in the browser and press Enter?">URL to page</button>
+      <button class="bookmark" data-prompt="What is the DOM and how does JavaScript change it?">The DOM</button>
+      <button class="bookmark" data-prompt="Explain what XSS is and how developers prevent it.">XSS</button>
+    </nav>
+
+    <main class="page">
+      <section class="messages" id="messages" aria-live="polite"></section>
+
+      <div class="composer">
+        <textarea id="input" rows="1" maxlength="2000" placeholder="Ask a web development question" aria-label="Your question"></textarea>
+        <button class="send" id="sendBtn" type="button">Send</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const GREETING = {{ greeting | tojson }};
+    const BASE_URL = "webmentor.study/";
+
+    const windowEl = document.getElementById("window");
+    const messagesEl = document.getElementById("messages");
+    const inputEl = document.getElementById("input");
+    const sendBtn = document.getElementById("sendBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const addressEl = document.getElementById("address");
+    const progressEl = document.getElementById("progress");
+
+    let history = [];
+    let busy = false;
+    let progressTimer = null;
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function inline(text) {
+      return escapeHtml(text)
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/`(.+?)`/g, "<code>$1</code>");
+    }
+
+    function render(text) {
+      const lines = text.split("\n");
+      let html = "";
+      let inList = false;
+      let inCode = false;
+
+      for (const raw of lines) {
+        if (raw.trim().startsWith("```")) {
+          if (inList) { html += "</ul>"; inList = false; }
+          html += inCode ? "</code></pre>" : "<pre><code>";
+          inCode = !inCode;
+          continue;
+        }
+
+        if (inCode) {
+          html += escapeHtml(raw) + "\n";
+          continue;
+        }
+
+        const line = raw.trim();
+        const item = line.match(/^(?:[-*]|\d+\.)\s+(.*)$/);
+
+        if (item) {
+          if (!inList) { html += "<ul>"; inList = true; }
+          html += "<li>" + inline(item[1]) + "</li>";
+        } else {
+          if (inList) { html += "</ul>"; inList = false; }
+          if (line) html += "<p>" + inline(line.replace(/^#+\s*/, "")) + "</p>";
+        }
+      }
+
+      if (inList) html += "</ul>";
+      if (inCode) html += "</code></pre>";
+      return html;
+    }
+
+    function slugify(text) {
+      const slug = text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, "")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 5)
+        .join("-");
+      return slug || "ask";
+    }
+
+    function addMessage(role, text, status, isError = false) {
+      const wrap = document.createElement("div");
+      wrap.className = "msg " + role + (isError ? " error" : "");
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.dataset.status = status;
+      if (role === "user") bubble.textContent = text;
+      else bubble.innerHTML = render(text);
+
+      wrap.appendChild(bubble);
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return wrap;
+    }
+
+    function addPending() {
+      const wrap = document.createElement("div");
+      wrap.className = "msg bot";
+      wrap.innerHTML = '<div class="bubble" data-status="pending"><div class="pending"><i></i>Loading response</div></div>';
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return wrap;
+    }
+
+    function setBusy(state) {
+      busy = state;
+      sendBtn.disabled = state;
+      windowEl.classList.toggle("busy", state);
+      clearTimeout(progressTimer);
+
+      if (state) {
+        progressEl.className = "progress";
+        void progressEl.offsetWidth;
+        progressEl.className = "progress loading";
+      } else {
+        progressEl.className = "progress done";
+        progressTimer = setTimeout(() => { progressEl.className = "progress"; }, 600);
+      }
+    }
+
+    async function send(text) {
+      const message = text.trim();
+      if (!message || busy) return;
+
+      addMessage("user", message, "GET /ask");
+      addressEl.textContent = BASE_URL + slugify(message);
+      inputEl.value = "";
+      inputEl.style.height = "auto";
+      setBusy(true);
+
+      const pending = addPending();
+
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, history })
+        });
+        const data = await response.json();
+        pending.remove();
+
+        if (!response.ok) {
+          addMessage("bot", data.error || "Something went wrong.", response.status + " error", true);
+        } else {
+          addMessage("bot", data.reply, "200 OK");
+          history.push({ role: "user", text: message }, { role: "bot", text: data.reply });
+        }
+      } catch (error) {
+        pending.remove();
+        addMessage("bot", "Could not reach the server. Check your connection and try again.", "offline", true);
+      } finally {
+        setBusy(false);
+        inputEl.focus();
+      }
+    }
+
+    function resetChat() {
+      history = [];
+      messagesEl.innerHTML = "";
+      addressEl.textContent = BASE_URL;
+      addMessage("bot", GREETING, "200 OK");
+    }
+
+    sendBtn.addEventListener("click", () => send(inputEl.value));
+
+    inputEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        send(inputEl.value);
+      }
+    });
+
+    inputEl.addEventListener("input", () => {
+      inputEl.style.height = "auto";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 130) + "px";
+    });
+
+    clearBtn.addEventListener("click", resetChat);
+
+    document.querySelectorAll(".bookmark").forEach((button) => {
+      button.addEventListener("click", () => send(button.dataset.prompt));
+    });
+
+    resetChat();
+  </script>
+</body>
+</html>
